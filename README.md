@@ -15,8 +15,6 @@
 
 **VLESS Shop Bot** — это комплексное решение для автоматизированной продажи VLESS-конфигураций через Telegram. Бот глубоко интегрирован с панелью управления **3x-ui** и предоставляет мощную веб-панель для полного контроля над вашим бизнесом.
 
-## [Следите за обновлениями бота в Телеграм канале!](https://t.me/vless_shopbot)
-
 ## 🚀 Основные возможности
 
 - **Полная автоматизация**: От регистрации пользователя до выдачи ключа после оплаты.
@@ -166,10 +164,8 @@ curl -sSL https://raw.githubusercontent.com/evansvl/vless-shopbot/main/install.s
 
 ## 💎 Поддержать разработку
 
-**CryptoBot:** https://t.me/send?start=IVftnggXmRv8
+**TON:** `UQDbfWx725tU9diUSyHd4oqorktmZ6-jBEbxa5EegIP3yGUm`
 
-**TON:** `UQAtdMEig3Wl_D3FNx4RU3RhxnoJI3IizGxrrNj3O8Q-fDpK`
-
-**USDT (TRC20):** `TBW9TFUh93U1G5eTT1VTsZw51L669khCiz`
+**USDT (TRC20):** `TAHV8EoYVKyr3L3t7mReCpjp7FrXNEb7Mw`
 
 ## Я ценю любой вклад в развитие проекта ❤️
