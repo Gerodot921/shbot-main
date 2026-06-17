@@ -50,7 +50,7 @@
 **2. Выполните команду:**
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/evansvl/vless-shopbot/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/Gerodot921/shbot-main/main/install.sh | sudo bash
 ```
 
 **Если вы обновляли бота, то иснтрукции ниже не появятся!**
