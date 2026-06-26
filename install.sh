@@ -83,9 +83,13 @@ echo -e "${GREEN}✔ Все системные зависимости устан
 
 echo -e "\n${CYAN}Шаг 2: Клонирование репозитория...${NC}"
 if [ ! -d "$PROJECT_DIR" ]; then
-    git clone $REPO_URL $PROJECT_DIR
+    git clone "$REPO_URL" "$PROJECT_DIR" || {
+        echo -e "${RED}Ошибка клонирования репозитория.${NC}"
+        exit 1
+    }
 fi
-cd $PROJECT_DIR
+
+cd "$PROJECT_DIR"
 echo -e "${GREEN}✔ Репозиторий готов.${NC}"
 
 echo -e "\n${CYAN}Шаг 3: Настройка домена и получение SSL-сертификатов...${NC}"
