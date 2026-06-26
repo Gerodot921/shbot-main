@@ -20,7 +20,7 @@ read_input_yn() {
 }
 
 REPO_URL="https://github.com/Gerodot921/shbot-main.git"
-PROJECT_DIR="shbot-main"
+PROJECT_DIR="vless-shopbot"
 NGINX_CONF_FILE="/etc/nginx/sites-available/${PROJECT_DIR}.conf"
 
 echo -e "${GREEN}--- Запуск скрипта установки/обновления VLESS Shop Bot ---${NC}"
@@ -83,7 +83,7 @@ echo -e "${GREEN}✔ Все системные зависимости устан
 
 echo -e "\n${CYAN}Шаг 2: Клонирование репозитория...${NC}"
 if [ ! -d "$PROJECT_DIR" ]; then
-    git clone $REPO_URL
+    git clone $REPO_URL $PROJECT_DIR
 fi
 cd $PROJECT_DIR
 echo -e "${GREEN}✔ Репозиторий готов.${NC}"
