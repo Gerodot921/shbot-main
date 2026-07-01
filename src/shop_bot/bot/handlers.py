@@ -970,44 +970,45 @@ def get_user_router() -> Router:
             return
 
         try:
-            payload = {
-                "email": customer_email,
-                "offerId": LAVA_OFFER_ID,
-                "currency": "RUB",
-                "amount": float(price_rub)
-            }
+            # payload = {
+            #     "email": customer_email,
+            #     "offerId": LAVA_OFFER_ID,
+            #     "currency": "RUB",
+            #     "amount": float(price_rub),
+            #     "periodicity": "MONTHLY"
+            # }
 
-            headers = {
-                "X-Api-Key": LAVA_API_KEY,
-                "Accept": "application/json"
-            }
-            logger.info("payload: %s", payload)
-            async with aiohttp.ClientSession() as session:
-                async with session.post("https://gate.lava.top/api/v3/invoice", json=payload, headers=headers) as response:
-                    response_text = await response.text()
-                    if response.status not in (200, 201):
-                        raise Exception(f"Lava.top returned {response.status}: {response_text}")
+            # headers = {
+            #     "X-Api-Key": LAVA_API_KEY,
+            #     "Accept": "application/json"
+            # }
+            # logger.info("payload: %s", payload)
+            # async with aiohttp.ClientSession() as session:
+            #     async with session.post("https://gate.lava.top/api/v3/invoice", json=payload, headers=headers) as response:
+            #         response_text = await response.text()
+            #         if response.status not in (200, 201):
+            #             raise Exception(f"Lava.top returned {response.status}: {response_text}")
+            #
+            #         invoice_data = await response.json(content_type=None)
 
-                    invoice_data = await response.json(content_type=None)
+            # payment_id = invoice_data.get("id")
+            payment_url = "https://app.lava.top/products/92d98e39-9f9b-4749-8106-3f68e223e799/ed16744d-a8c8-4467-8b9b-e7e1e745925d"
 
-            payment_id = invoice_data.get("id")
-            payment_url = invoice_data.get("paymentUrl")
+            # if not payment_id or not payment_url:
+            #     raise Exception(f"Lava.top response does not contain payment url or contract id: {invoice_data}")
 
-            if not payment_id or not payment_url:
-                raise Exception(f"Lava.top response does not contain payment url or contract id: {invoice_data}")
-
-            metadata = {
-                "user_id": user_id,
-                "months": months,
-                "price": float(price_rub),
-                "action": action,
-                "key_id": key_id,
-                "host_name": host_name,
-                "plan_id": plan_id,
-                "customer_email": customer_email,
-                "payment_method": "Lava.top"
-            }
-            create_pending_transaction(payment_id, user_id, float(price_rub), metadata)
+            # metadata = {
+            #     "user_id": user_id,
+            #     "months": months,
+            #     "price": float(price_rub),
+            #     "action": action,
+            #     "key_id": key_id,
+            #     "host_name": host_name,
+            #     "plan_id": plan_id,
+            #     "customer_email": customer_email,
+            #     "payment_method": "Lava.top"
+            # }
+            # create_pending_transaction(payment_id, user_id, float(price_rub), metadata)
 
             await state.clear()
 
