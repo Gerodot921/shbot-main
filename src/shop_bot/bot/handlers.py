@@ -981,7 +981,7 @@ def get_user_router() -> Router:
                 "X-Api-Key": LAVA_API_KEY,
                 "Accept": "application/json"
             }
-
+            logger.info("payload: %s", payload)
             async with aiohttp.ClientSession() as session:
                 async with session.post("https://gate.lava.top/api/v3/invoice", json=payload, headers=headers) as response:
                     response_text = await response.text()
