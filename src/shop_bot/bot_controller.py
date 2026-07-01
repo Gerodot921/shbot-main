@@ -4,11 +4,11 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode 
 
-from shop_bot.data_manager import database
-from shop_bot.bot.handlers import get_user_router
-from shop_bot.bot.middlewares import BanMiddleware
-from shop_bot.bot import handlers, support_handlers
-from shop_bot.bot.support_handlers import get_support_router
+from src.shop_bot.data_manager import database
+from src.shop_bot.bot.handlers import get_user_router
+from src.shop_bot.bot.middlewares import BanMiddleware
+from src.shop_bot.bot import handlers, support_handlers
+from src.shop_bot.bot.support_handlers import get_support_router
 
 logger = logging.getLogger(__name__)
 
