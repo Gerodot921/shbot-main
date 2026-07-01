@@ -129,7 +129,7 @@ async def sync_keys_with_panels():
         logger.info(f"Scheduler: Processing host: '{host_name}'")
         
         try:
-            logger.debug(f"{host=}")
+            logger.info(f"{host=}")
             api, inbound = xui_api.login_to_host(
                 host_url=host['host_url'],
                 username=host['host_username'],

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def login_to_host(host_url: str, username: str, password: str, inbound_id: int) -> tuple[Api | None, Inbound | None]:
     try:
-        logger.debug(host_url, username, password, inbound_id)
+        logger.info(host_url, username, password, inbound_id)
         api = Api(host=host_url, username=username, password=password)
         api.login()
         inbounds: List[Inbound] = api.inbound.get_list()
@@ -101,7 +101,7 @@ def update_or_create_client_on_panel(api: Api, inbound_id: int, email: str, days
         return None, None
 
 async def create_or_update_key_on_host(host_name: str, email: str, days_to_add: int) -> Dict | None:
-    logger.debug("create_or_update_key_on_host")
+    logger.info("create_or_update_key_on_host")
     host_data = get_host(host_name)
     if not host_data:
         logger.error(f"Workflow failed: Host '{host_name}' not found in the database.")
@@ -135,7 +135,7 @@ async def create_or_update_key_on_host(host_name: str, email: str, days_to_add: 
     }
 
 async def get_key_details_from_host(key_data: dict) -> dict | None:
-    logger.debug("get_key_details_from_host")
+    logger.info("get_key_details_from_host")
     host_name = key_data.get('host_name')
     if not host_name:
         logger.error(f"Could not get key details: host_name is missing for key_id {key_data.get('key_id')}")
@@ -158,7 +158,7 @@ async def get_key_details_from_host(key_data: dict) -> dict | None:
     return {"connection_string": connection_string}
 
 async def delete_client_on_host(host_name: str, client_email: str) -> bool:
-    logger.debug("delete_client_on_host")
+    logger.info("delete_client_on_host")
     host_data = get_host(host_name)
     if not host_data:
         logger.error(f"Cannot delete client: Host '{host_name}' not found.")
