@@ -6,12 +6,13 @@ from typing import List, Dict
 
 from py3xui import Api, Client, Inbound
 
-from shop_bot.data_manager.database import get_host, get_key_by_email
+from src.shop_bot.data_manager.database import get_host, get_key_by_email
 
 logger = logging.getLogger(__name__)
 
 def login_to_host(host_url: str, username: str, password: str, inbound_id: int) -> tuple[Api | None, Inbound | None]:
     try:
+        print(host_url, username, password, inbound_id)
         api = Api(host=host_url, username=username, password=password)
         api.login()
         inbounds: List[Inbound] = api.inbound.get_list()
