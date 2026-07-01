@@ -30,9 +30,9 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ChatMemberStatus
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from src.shop_bot.bot import keyboards
-from src.shop_bot.modules import xui_api
-from src.shop_bot.data_manager.database import (
+from shop_bot.bot import keyboards
+from shop_bot.modules import xui_api
+from shop_bot.data_manager.database import (
     get_user, add_new_key, get_user_keys, update_user_stats,
     register_user_if_not_exists, get_next_key_number, get_key_by_id,
     update_key_info, set_trial_used, set_terms_agreed, get_setting, get_all_hosts,
@@ -41,18 +41,13 @@ from src.shop_bot.data_manager.database import (
     set_referral_balance, set_referral_balance_all
 )
 
-from src.shop_bot.config import (
+from shop_bot.config import (
     get_profile_text, get_vpn_active_text, VPN_INACTIVE_TEXT, VPN_NO_DATA_TEXT,
     get_key_info_text, CHOOSE_PAYMENT_METHOD_MESSAGE, get_purchase_success_text
 )
 
 TELEGRAM_BOT_USERNAME = None
-PAYMENT_METHODS = {
-    "lava": False,
-    "heleket": False,
-    "cryptobot": False,
-    "tonconnect": False
-}
+PAYMENT_METHODS = None
 ADMIN_ID = None
 CRYPTO_BOT_TOKEN = get_setting("cryptobot_token")
 LAVA_API_KEY = None
@@ -83,10 +78,6 @@ class Broadcast(StatesGroup):
 
 class WithdrawStates(StatesGroup):
     waiting_for_details = State()
-
-def get_payment_methods():
-    global PAYMENT_METHODS
-    return PAYMENT_METHODS or {}
 
 def is_valid_email(email: str) -> bool:
     pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
@@ -856,7 +847,7 @@ def get_user_router() -> Router:
             await message.answer(
                 CHOOSE_PAYMENT_METHOD_MESSAGE,
                 reply_markup=keyboards.create_payment_method_keyboard(
-                    payment_methods=PAYMENT_METHODS or {},
+                    payment_methods=PAYMENT_METHODS,
                     action=data.get('action'),
                     key_id=data.get('key_id')
                 )
@@ -875,7 +866,7 @@ def get_user_router() -> Router:
         await callback.message.edit_text(
             CHOOSE_PAYMENT_METHOD_MESSAGE,
             reply_markup=keyboards.create_payment_method_keyboard(
-                payment_methods=PAYMENT_METHODS or {},
+                payment_methods=PAYMENT_METHODS,
                 action=data.get('action'),
                 key_id=data.get('key_id')
             )
@@ -917,7 +908,7 @@ def get_user_router() -> Router:
         await message.edit_text(
             message_text,
             reply_markup=keyboards.create_payment_method_keyboard(
-                payment_methods=PAYMENT_METHODS or {},
+                payment_methods=PAYMENT_METHODS,
                 action=data.get('action'),
                 key_id=data.get('key_id')
             )
