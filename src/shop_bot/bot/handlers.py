@@ -30,9 +30,9 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ChatMemberStatus
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from shop_bot.bot import keyboards
-from shop_bot.modules import xui_api
-from shop_bot.data_manager.database import (
+from src.shop_bot.bot import keyboards
+from src.shop_bot.modules import xui_api
+from src.shop_bot.data_manager.database import (
     get_user, add_new_key, get_user_keys, update_user_stats,
     register_user_if_not_exists, get_next_key_number, get_key_by_id,
     update_key_info, set_trial_used, set_terms_agreed, get_setting, get_all_hosts,
@@ -41,7 +41,7 @@ from shop_bot.data_manager.database import (
     set_referral_balance, set_referral_balance_all
 )
 
-from shop_bot.config import (
+from src.shop_bot.config import (
     get_profile_text, get_vpn_active_text, VPN_INACTIVE_TEXT, VPN_NO_DATA_TEXT,
     get_key_info_text, CHOOSE_PAYMENT_METHOD_MESSAGE, get_purchase_success_text
 )

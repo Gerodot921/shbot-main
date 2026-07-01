@@ -6,7 +6,7 @@ from typing import List, Dict
 
 from py3xui import Api, Client, Inbound
 
-from shop_bot.data_manager.database import get_host, get_key_by_email
+from src.shop_bot.data_manager.database import get_host, get_key_by_email
 
 logger = logging.getLogger(__name__)
 
@@ -170,9 +170,9 @@ async def delete_client_on_host(host_name: str, client_email: str) -> bool:
     if not api or not inbound:
         logger.error(f"Cannot delete client: Login or inbound lookup failed for host '{host_name}'.")
         return False
-        
+
+    client_to_delete = get_key_by_email(client_email)
     try:
-        client_to_delete = get_key_by_email(client_email)
         if client_to_delete:
             api.client.delete(inbound.id, client_to_delete['xui_client_uuid'])
             logger.info(f"Successfully deleted client '{client_to_delete['xui_client_uuid']}' from host '{host_name}'.")
