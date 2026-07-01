@@ -47,7 +47,12 @@ from src.shop_bot.config import (
 )
 
 TELEGRAM_BOT_USERNAME = None
-PAYMENT_METHODS = None
+PAYMENT_METHODS = {
+    "lava": False,
+    "heleket": False,
+    "cryptobot": False,
+    "tonconnect": False
+}
 ADMIN_ID = None
 CRYPTO_BOT_TOKEN = get_setting("cryptobot_token")
 LAVA_API_KEY = None
@@ -78,6 +83,10 @@ class Broadcast(StatesGroup):
 
 class WithdrawStates(StatesGroup):
     waiting_for_details = State()
+
+def get_payment_methods():
+    global PAYMENT_METHODS
+    return PAYMENT_METHODS or {}
 
 def is_valid_email(email: str) -> bool:
     pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
@@ -847,7 +856,7 @@ def get_user_router() -> Router:
             await message.answer(
                 CHOOSE_PAYMENT_METHOD_MESSAGE,
                 reply_markup=keyboards.create_payment_method_keyboard(
-                    payment_methods=PAYMENT_METHODS,
+                    payment_methods=PAYMENT_METHODS or {},
                     action=data.get('action'),
                     key_id=data.get('key_id')
                 )
@@ -866,7 +875,7 @@ def get_user_router() -> Router:
         await callback.message.edit_text(
             CHOOSE_PAYMENT_METHOD_MESSAGE,
             reply_markup=keyboards.create_payment_method_keyboard(
-                payment_methods=PAYMENT_METHODS,
+                payment_methods=PAYMENT_METHODS or {},
                 action=data.get('action'),
                 key_id=data.get('key_id')
             )
@@ -908,7 +917,7 @@ def get_user_router() -> Router:
         await message.edit_text(
             message_text,
             reply_markup=keyboards.create_payment_method_keyboard(
-                payment_methods=PAYMENT_METHODS,
+                payment_methods=PAYMENT_METHODS or {},
                 action=data.get('action'),
                 key_id=data.get('key_id')
             )
