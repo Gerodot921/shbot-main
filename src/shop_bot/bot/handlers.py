@@ -816,12 +816,18 @@ def get_user_router() -> Router:
         await state.update_data(
             action=action, key_id=key_id, plan_id=plan_id, host_name=host_name
         )
-        
-        await callback.message.edit_text(
-            "📧 Пожалуйста, введите ваш email для отправки чека об оплате.",
-            reply_markup=keyboards.create_skip_email_keyboard()
+        data = await state.get_data()
+        await callback.message.answer(
+            CHOOSE_PAYMENT_METHOD_MESSAGE,
+            reply_markup=keyboards.create_payment_method_keyboard(
+                payment_methods=PAYMENT_METHODS,
+                action=data.get('action'),
+                key_id=data.get('key_id')
+            )
         )
-        await state.set_state(PaymentProcess.waiting_for_email)
+        await state.set_state(PaymentProcess.waiting_for_payment_method)
+        logger.info(f"User {callback.chat.id}: State set to waiting_for_payment_method")
+
 
     @user_router.callback_query(PaymentProcess.waiting_for_email, F.data == "back_to_plans")
     async def back_to_plans_handler(callback: types.CallbackQuery, state: FSMContext):
@@ -837,26 +843,16 @@ def get_user_router() -> Router:
         else:
             await back_to_main_menu_handler(callback)
 
-    @user_router.message(PaymentProcess.waiting_for_email)
-    async def process_email_handler(message: types.Message, state: FSMContext):
-        if is_valid_email(message.text):
-            await state.update_data(customer_email=message.text)
-            set_user_email(message.from_user.id, message.text)
-            await message.answer(f"✅ Email принят: {message.text}\n\nEmail должен соответствовать тому, что будет указан при оплате.")
-
-            data = await state.get_data()
-            await message.answer(
-                CHOOSE_PAYMENT_METHOD_MESSAGE,
-                reply_markup=keyboards.create_payment_method_keyboard(
-                    payment_methods=PAYMENT_METHODS,
-                    action=data.get('action'),
-                    key_id=data.get('key_id')
-                )
-            )
-            await state.set_state(PaymentProcess.waiting_for_payment_method)
-            logger.info(f"User {message.chat.id}: State set to waiting_for_payment_method")
-        else:
-            await message.answer("❌ Неверный формат email. Попробуйте еще раз.")
+    # @user_router.message(PaymentProcess.waiting_for_email)
+    # async def process_email_handler(message: types.Message, state: FSMContext):
+    #     if is_valid_email(message.text):
+    #         await state.update_data(customer_email=message.text)
+    #         set_user_email(message.from_user.id, message.text)
+    #         await message.answer(f"✅ Email принят: {message.text}\n\nEmail должен соответствовать тому, что будет указан при оплате.")
+    #
+    #
+    #     else:
+    #         await message.answer("❌ Неверный формат email. Попробуйте еще раз.")
 
 
     async def show_payment_options(message: types.Message, state: FSMContext):
