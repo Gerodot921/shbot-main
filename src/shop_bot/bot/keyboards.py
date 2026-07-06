@@ -88,7 +88,7 @@ def create_plans_keyboard(plans: list[dict], action: str, host_name: str, key_id
     builder = InlineKeyboardBuilder()
     for plan in plans:
         callback_data = f"buy_{host_name}_{plan['plan_id']}_{action}_{key_id}"
-        builder.button(text=f"{plan['plan_name']} - {plan['price']:.0f} RUB", callback_data=callback_data)
+        builder.button(text=f"{plan['plan_name']}", callback_data=callback_data)
     back_callback = "manage_keys" if action == "extend" else "buy_new_key"
     builder.button(text="⬅️ Назад", callback_data=back_callback)
     builder.adjust(1) 
