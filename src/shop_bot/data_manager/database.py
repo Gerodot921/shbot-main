@@ -15,8 +15,12 @@ def initialize_db():
             cursor = conn.cursor()
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS users (
-                    telegram_id INTEGER PRIMARY KEY, username TEXT, total_spent REAL DEFAULT 0,
-                    total_months INTEGER DEFAULT 0, trial_used BOOLEAN DEFAULT 0,
+                    telegram_id INTEGER PRIMARY KEY,
+                    username TEXT,
+                    email VARCHAR(320) NULL,
+                    total_spent REAL DEFAULT 0,
+                    total_months INTEGER DEFAULT 0,
+                    trial_used BOOLEAN DEFAULT 0,
                     agreed_to_terms BOOLEAN DEFAULT 0,
                     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     is_banned BOOLEAN DEFAULT 0,
@@ -830,3 +834,34 @@ def delete_user_keys(user_id: int):
             conn.commit()
     except sqlite3.Error as e:
         logging.error(f"Failed to delete keys for user {user_id}: {e}")
+
+
+def set_user_email(user_id: int, email: str | None) -> bool:
+    try:
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE users SET email = ? WHERE telegram_id = ?",
+                (email, user_id)
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+    except sqlite3.Error as e:
+        logging.error(f"Failed to set email for user {user_id}: {e}")
+        return False
+
+
+def get_user_email(user_id: int) -> str | None:
+    try:
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT email FROM users WHERE telegram_id = ?",
+                (user_id,)
+            )
+            row = cursor.fetchone()
+            return row[0] if row else None
+    except sqlite3.Error as e:
+        logging.error(f"Failed to get email for user {user_id}: {e}")
+        return None
+

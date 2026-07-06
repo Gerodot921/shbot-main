@@ -10,6 +10,8 @@ from functools import wraps
 from math import ceil
 from flask import Flask, request, render_template, redirect, url_for, flash, session, current_app
 
+from src.shop_bot.data_manager.database import get_user_email
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -290,13 +292,26 @@ def create_webhook_app(bot_controller_instance):
             if event_type in ("payment.success", "subscription.recurring.payment.success"):
                 contract_id = event_json.get("contractId")
                 amount_total = event_json.get("amount")
-                currency_name = event_json.get("currency", "RUB")
+                currency_name = event_json.get("currency")
+                telegram_id = event_json.get("clientUtm", {}).get("telegram_id")
 
                 if not contract_id:
                     logger.warning("Lava.top webhook: success event without contractId.")
                     return 'OK', 200
 
-                metadata = handlers.find_and_complete_lava_transaction(contract_id, float(amount_total or 0), currency_name)
+                # metadata = handlers.find_and_complete_lava_transaction(contract_id, float(amount_total or 0), currency_name)
+                email = event_json.get("buyer", {}).get("email")
+                metadata = {
+                    "contract_id": contract_id,
+                    "user_id": telegram_id,
+                    "email": email,
+                    "amount": amount_total,
+                    "currency": currency_name,
+                    "timestamp": event_json.get("timestamp"),
+                    "status": event_json.get("status"),
+                    "product_id": event_json.get("product", {}).get("id"),
+                    "error_message": event_json.get("errorMessage"),
+                }
 
                 bot = _bot_controller.get_bot_instance()
                 payment_processor = handlers.process_successful_payment

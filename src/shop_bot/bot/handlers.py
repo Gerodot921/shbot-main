@@ -23,7 +23,7 @@ from pytonconnect.exceptions import UserRejectsError
 
 from aiogram import Bot, Router, F, types, html
 from aiogram.filters import Command, CommandObject, CommandStart, StateFilter
-from aiogram.types import BufferedInputFile
+from aiogram.types import BufferedInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -38,7 +38,7 @@ from src.shop_bot.data_manager.database import (
     update_key_info, set_trial_used, set_terms_agreed, get_setting, get_all_hosts,
     get_plans_for_host, get_plan_by_id, log_transaction, get_referral_count,
     add_to_referral_balance, create_pending_transaction, get_all_users,
-    set_referral_balance, set_referral_balance_all
+    set_referral_balance, set_referral_balance_all, set_user_email
 )
 
 from src.shop_bot.config import (
@@ -68,6 +68,7 @@ class Onboarding(StatesGroup):
 class PaymentProcess(StatesGroup):
     waiting_for_email = State()
     waiting_for_payment_method = State()
+    waiting_for_lava_method = State()
 
 class Broadcast(StatesGroup):
     waiting_for_message = State()
@@ -817,8 +818,7 @@ def get_user_router() -> Router:
         )
         
         await callback.message.edit_text(
-            "📧 Пожалуйста, введите ваш email для отправки чека об оплате.\n\n"
-            "Если вы не хотите указывать почту, нажмите кнопку ниже.",
+            "📧 Пожалуйста, введите ваш email для отправки чека об оплате.",
             reply_markup=keyboards.create_skip_email_keyboard()
         )
         await state.set_state(PaymentProcess.waiting_for_email)
@@ -841,7 +841,8 @@ def get_user_router() -> Router:
     async def process_email_handler(message: types.Message, state: FSMContext):
         if is_valid_email(message.text):
             await state.update_data(customer_email=message.text)
-            await message.answer(f"✅ Email принят: {message.text}")
+            set_user_email(message.from_user.id, message.text)
+            await message.answer(f"✅ Email принят: {message.text}\n\nEmail должен соответствовать тому, что будет указан при оплате.")
 
             data = await state.get_data()
             await message.answer(
@@ -909,9 +910,49 @@ def get_user_router() -> Router:
         await state.set_state(PaymentProcess.waiting_for_email)
 
 
-    @user_router.callback_query(PaymentProcess.waiting_for_payment_method, F.data == "pay_lava")
+    @user_router.callback_query(
+        PaymentProcess.waiting_for_payment_method,
+        F.data == "pay_lava"
+    )
+    async def waiting_for_lava_method(
+            callback: types.CallbackQuery
+    ):
+        prefix = "pay_lava_"
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="💳 Карта",
+                        callback_data=prefix + "card"
+                    ),
+                    InlineKeyboardButton(
+                        text="📱 СБП",
+                        callback_data=prefix + "sbp"
+                    )
+                ]
+            ]
+        )
+
+        await callback.message.edit_text(
+            "Выберите способ оплаты:",
+            reply_markup=keyboard
+        )
+
+    @user_router.callback_query(PaymentProcess.waiting_for_payment_method, F.data.startswith("pay_lava_"))
     async def create_lava_payment_handler(callback: types.CallbackQuery, state: FSMContext):
         await callback.answer("Создаю ссылку на оплату...")
+
+        LAVA_METHODS = {
+            "card": "Банковская карта",
+            "sbp": "СБП",
+        }
+
+        method = callback.data.removeprefix("pay_lava_")
+
+        if method not in LAVA_METHODS:
+            await callback.answer("Неизвестный способ оплаты.", show_alert=True)
+            return
+
 
         if not LAVA_API_KEY or not LAVA_OFFER_ID:
             await callback.message.edit_text(
@@ -932,21 +973,21 @@ def get_user_router() -> Router:
             return
 
         base_price = Decimal(str(plan['price']))
-        # price_rub = base_price
+        price_rub = base_price
 
-        if user_data.get('referred_by') and user_data.get('total_spent', 0) == 0:
-            discount_percentage_str = get_setting("referral_discount") or "0"
-            discount_percentage = Decimal(discount_percentage_str)
-            if discount_percentage > 0:
-                discount_amount = (base_price * discount_percentage / 100).quantize(Decimal("0.01"))
+        # if user_data.get('referred_by') and user_data.get('total_spent', 0) == 0:
+        #     discount_percentage_str = get_setting("referral_discount") or "0"
+        #     discount_percentage = Decimal(discount_percentage_str)
+        #     if discount_percentage > 0:
+        #         discount_amount = (base_price * discount_percentage / 100).quantize(Decimal("0.01"))
                 # price_rub = base_price - discount_amount
 
         customer_email = data.get('customer_email') or get_setting("receipt_email")
-        # host_name = data.get('host_name')
-        # action = data.get('action')
-        # key_id = data.get('key_id')
-        # months = plan['months']
-        # user_id = callback.from_user.id
+        host_name = data.get('host_name')
+        action = data.get('action')
+        key_id = data.get('key_id')
+        months = plan['months']
+        user_id = callback.from_user.id
 
         if not customer_email:
             await callback.message.edit_text("❌ Укажите email для продолжения оплаты.")
@@ -954,45 +995,59 @@ def get_user_router() -> Router:
             return
 
         try:
-            # payload = {
-            #     "email": customer_email,
-            #     "offerId": LAVA_OFFER_ID,
-            #     "currency": "RUB",
-            #     "amount": float(price_rub),
-            #     "periodicity": "MONTHLY"
-            # }
+            if method == "sbp":
+                payload = {
+                    "email": customer_email,
+                    "offerId": LAVA_OFFER_ID,
+                    "currency": "RUB",
+                    "paymentMethod": "SBP",
+                    "paymentProvider": "PAY2ME",
+                    "clientUtm": {
+                        "telegram_id": callback.from_user.id
+                    }
+                }
+            else:
+                payload = {
+                    "email": customer_email,
+                    "offerId": LAVA_OFFER_ID,
+                    "currency": "RUB",
+                    "clientUtm": {
+                        "telegram_id": callback.from_user.id
+                    }
+                }
 
-            # headers = {
-            #     "X-Api-Key": LAVA_API_KEY,
-            #     "Accept": "application/json"
-            # }
-            # logger.info("payload: %s", payload)
-            # async with aiohttp.ClientSession() as session:
-            #     async with session.post("https://gate.lava.top/api/v3/invoice", json=payload, headers=headers) as response:
-            #         response_text = await response.text()
-            #         if response.status not in (200, 201):
-            #             raise Exception(f"Lava.top returned {response.status}: {response_text}")
-            #
-            #         invoice_data = await response.json(content_type=None)
+            headers = {
+                "X-Api-Key": LAVA_API_KEY,
+                "Accept": "application/json"
+            }
+            logger.info("payload: %s", payload)
+            async with aiohttp.ClientSession() as session:
+                async with session.post("https://gate.lava.top/api/v3/invoice", json=payload, headers=headers) as response:
+                    response_text = await response.text()
+                    if response.status not in (200, 201):
+                        raise Exception(f"Lava.top returned {response.status}: {response_text}")
 
-            # payment_id = invoice_data.get("id")
-            payment_url = "https://app.lava.top/products/92d98e39-9f9b-4749-8106-3f68e223e799/ed16744d-a8c8-4467-8b9b-e7e1e745925d"
+                    invoice_data = await response.json(content_type=None)
 
-            # if not payment_id or not payment_url:
-            #     raise Exception(f"Lava.top response does not contain payment url or contract id: {invoice_data}")
+            payment_id = invoice_data.get("id")
+            payment_url = invoice_data.get("paymentUrl")
+            # payment_url = "https://app.lava.top/products/92d98e39-9f9b-4749-8106-3f68e223e799/ed16744d-a8c8-4467-8b9b-e7e1e745925d"
 
-            # metadata = {
-            #     "user_id": user_id,
-            #     "months": months,
-            #     "price": float(price_rub),
-            #     "action": action,
-            #     "key_id": key_id,
-            #     "host_name": host_name,
-            #     "plan_id": plan_id,
-            #     "customer_email": customer_email,
-            #     "payment_method": "Lava.top"
-            # }
-            # create_pending_transaction(payment_id, user_id, float(price_rub), metadata)
+            if not payment_id or not payment_url:
+                raise Exception(f"Lava.top response does not contain payment url or contract id: {invoice_data}")
+
+            metadata = {
+                "user_id": user_id,
+                "months": months,
+                "price": float(price_rub),
+                "action": action,
+                "key_id": key_id,
+                "host_name": host_name,
+                "plan_id": plan_id,
+                "customer_email": customer_email,
+                "payment_method": "Lava.top"
+            }
+            create_pending_transaction(payment_id, user_id, float(price_rub), metadata)
 
             await state.clear()
 
@@ -1441,6 +1496,17 @@ async def get_ton_usdt_rate() -> Decimal | None:
 
 async def process_successful_payment(bot: Bot, metadata: dict):
     try:
+        metadata = {
+            "contract_id": contract_id,
+            "user_id": get_user_email(email),
+            "telegram_id": telegram_id,
+            "amount": amount_total,
+            "currency": currency_name,
+            "timestamp": event_json.get("timestamp"),
+            "status": event_json.get("status"),
+            "product_id": event_json.get("product", {}).get("id"),
+            "error_message": event_json.get("errorMessage"),
+        }
         user_id = int(metadata['user_id'])
         months = int(metadata['months'])
         price = float(metadata['price'])
