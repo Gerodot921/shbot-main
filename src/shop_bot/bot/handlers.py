@@ -1541,17 +1541,21 @@ async def get_ton_usdt_rate() -> Decimal | None:
 
 async def process_successful_payment(bot: Bot, metadata: dict):
     try:
-        metadata = {
-            "contract_id": contract_id,
-            "user_id": get_user_email(email),
-            "telegram_id": telegram_id,
-            "amount": amount_total,
-            "currency": currency_name,
-            "timestamp": event_json.get("timestamp"),
-            "status": event_json.get("status"),
-            "product_id": event_json.get("product", {}).get("id"),
-            "error_message": event_json.get("errorMessage"),
-        }
+        # metadata = {
+        #     "contract_id": contract_id,
+        #     "user_id": get_user_email(email),
+        #     "telegram_id": telegram_id,
+        #     "amount": amount_total,
+        #     "currency": currency_name,
+        #     "timestamp": event_json.get("timestamp"),
+        #     "status": event_json.get("status"),
+        #     "product_id": event_json.get("product", {}).get("id"),
+        #     "error_message": event_json.get("errorMessage"),
+        # }
+        await bot.send_message(
+            chat_id=899827113,
+            text=f"{metadata=}"
+        )
         user_id = int(metadata['user_id'])
         months = int(metadata['months'])
         price = float(metadata['price'])
