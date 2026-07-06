@@ -112,7 +112,7 @@ async def create_or_update_key_on_host(host_name: str, email: str, days_to_add: 
     if not host_data:
         logger.error(f"Workflow failed: Host '{host_name}' not found in the database.")
         return None
-
+    logger.info(f"{host_data=}")
     api, inbound = login_to_host(
         host_url=host_data['host_url'],
         username=host_data['host_username'],
