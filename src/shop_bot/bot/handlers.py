@@ -995,7 +995,7 @@ def get_user_router() -> Router:
         payload = {
             "email": customer_email,
             "offerId": LAVA_OFFER_ID,
-            "currency": currency.upper(),
+            # "currency": currency.upper(),
             "clientUtm": {
                 "telegram_id": callback.from_user.id
             },
