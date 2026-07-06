@@ -1,6 +1,7 @@
 import logging
 
 from datetime import datetime
+from typing import List
 
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -99,15 +100,15 @@ def create_skip_email_keyboard() -> InlineKeyboardMarkup:
     builder.adjust(1)
     return builder.as_markup()
 
-def create_payment_method_keyboard(payment_methods: dict, action: str, key_id: int) -> InlineKeyboardMarkup:
+def create_payment_method_keyboard(plan: dict, payment_methods: dict, action: str, key_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
     if payment_methods.get("lava"):
-        builder.button(text="🏦 СБП", callback_data="pay_lava_sbp")
-        builder.button(text="💳 Банковская карта", callback_data="pay_lava_card")
+        builder.button(text=f"🏦 СБП  - {plan['price']:.0f} RUB", callback_data="pay_lava_sbp")
+        builder.button(text=f"💳 Карта - {plan['price']:.0f} RUB", callback_data="pay_lava_card")
 
     if payment_methods.get("heleket"):
-        builder.button(text="💎 Криптовалюта", callback_data="pay_heleket")
+        builder.button(text="💎 Криптовалюта (soon)", callback_data="pay_heleket")
 
     if payment_methods.get("cryptobot"):
         builder.button(text="🤖 CryptoBot", callback_data="pay_cryptobot")

@@ -825,9 +825,12 @@ def get_user_router() -> Router:
             host_name=host_name
         )
 
+        plan = get_plan_by_id(plan_id)
+
         await callback.message.answer(
             CHOOSE_PAYMENT_METHOD_MESSAGE,
             reply_markup=keyboards.create_payment_method_keyboard(
+                plan=plan,
                 payment_methods=PAYMENT_METHODS,
                 action=action,
                 key_id=key_id
