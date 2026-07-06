@@ -609,7 +609,7 @@ def get_user_router() -> Router:
         await message.edit_text(f"Отлично! Создаю для вас бесплатный ключ на {get_setting('trial_duration_days')} дня на сервере \"{host_name}\"...")
 
         try:
-            logger.info(f"{host_name=}, {f"user{user_id}-key{get_next_key_number(user_id)}-trial@telegram.bot"}, {int(get_setting("trial_duration_days"))}")
+            logger.info(f"{host_name=}, user{user_id}-key{get_next_key_number(user_id)}-trial@telegram.bot, {int(get_setting("trial_duration_days"))}")
             result = await create_or_update_key_on_host(
                 host_name=host_name,
                 email=f"user{user_id}-key{get_next_key_number(user_id)}-trial@telegram.bot",
