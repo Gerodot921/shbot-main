@@ -102,18 +102,21 @@ def create_skip_email_keyboard() -> InlineKeyboardMarkup:
 def create_payment_method_keyboard(payment_methods: dict, action: str, key_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
-    if payment_methods and payment_methods.get("lava"):
-        builder.button(text="💳 Lava.top", callback_data="pay_lava")
-    if payment_methods and payment_methods.get("heleket"):
+    if payment_methods.get("lava"):
+        builder.button(text="🏦 СБП", callback_data="pay_lava_sbp")
+        builder.button(text="💳 Банковская карта", callback_data="pay_lava_card")
+
+    if payment_methods.get("heleket"):
         builder.button(text="💎 Криптовалюта", callback_data="pay_heleket")
-    if payment_methods and payment_methods.get("cryptobot"):
+
+    if payment_methods.get("cryptobot"):
         builder.button(text="🤖 CryptoBot", callback_data="pay_cryptobot")
-    if payment_methods and payment_methods.get("tonconnect"):
-        callback_data_ton = "pay_tonconnect"
-        logger.info(f"Creating TON button with callback_data: '{callback_data_ton}'")
-        builder.button(text="🪙 TON Connect", callback_data=callback_data_ton)
+
+    if payment_methods.get("tonconnect"):
+        builder.button(text="🪙 TON Connect", callback_data="pay_tonconnect")
 
     builder.button(text="⬅️ Назад", callback_data="back_to_email_prompt")
+
     builder.adjust(1)
     return builder.as_markup()
 

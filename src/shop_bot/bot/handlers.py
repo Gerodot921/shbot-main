@@ -811,7 +811,7 @@ def get_user_router() -> Router:
     @registration_required
     async def plan_selection_handler(callback: types.CallbackQuery, state: FSMContext):
         await callback.answer()
-        
+
         parts = callback.data.split("_")[1:]
         action = parts[-2]
         key_id = int(parts[-1])
@@ -819,19 +819,22 @@ def get_user_router() -> Router:
         host_name = "_".join(parts[:-3])
 
         await state.update_data(
-            action=action, key_id=key_id, plan_id=plan_id, host_name=host_name
+            action=action,
+            key_id=key_id,
+            plan_id=plan_id,
+            host_name=host_name
         )
-        data = await state.get_data()
+
         await callback.message.answer(
             CHOOSE_PAYMENT_METHOD_MESSAGE,
             reply_markup=keyboards.create_payment_method_keyboard(
                 payment_methods=PAYMENT_METHODS,
-                action=data.get('action'),
-                key_id=data.get('key_id')
+                action=action,
+                key_id=key_id
             )
         )
+
         await state.set_state(PaymentProcess.waiting_for_payment_method)
-        logger.info(f"User {callback.message.chat.id}: State set to waiting_for_payment_method")
 
 
     @user_router.callback_query(PaymentProcess.waiting_for_email, F.data == "back_to_plans")
@@ -860,64 +863,73 @@ def get_user_router() -> Router:
     #         await message.answer("❌ Неверный формат email. Попробуйте еще раз.")
 
 
-    async def show_payment_options(message: types.Message, state: FSMContext):
-        data = await state.get_data()
-        user_data = get_user(message.chat.id)
-        plan = get_plan_by_id(data.get('plan_id'))
+    # async def show_payment_options(message: types.Message, state: FSMContext):
+    #     data = await state.get_data()
+    #     user_data = get_user(message.chat.id)
+    #     plan = get_plan_by_id(data.get('plan_id'))
+    #
+    #     if not plan:
+    #         await message.edit_text("❌ Ошибка: Тариф не найден.")
+    #         await state.clear()
+    #         return
+    #
+    #     price = Decimal(str(plan['price']))
+    #     final_price = price
+    #     discount_applied = False
+    #     message_text = CHOOSE_PAYMENT_METHOD_MESSAGE
+    #
+    #     if user_data.get('referred_by') and user_data.get('total_spent', 0) == 0:
+    #         discount_percentage_str = get_setting("referral_discount") or "0"
+    #         discount_percentage = Decimal(discount_percentage_str)
+    #
+    #         if discount_percentage > 0:
+    #             discount_amount = (price * discount_percentage / 100).quantize(Decimal("0.01"))
+    #             final_price = price - discount_amount
+    #
+    #             message_text = (
+    #                 f"🎉 Как приглашенному пользователю, на вашу первую покупку предоставляется скидка {discount_percentage_str}%!\n"
+    #                 f"Старая цена: <s>{price:.2f} RUB</s>\n"
+    #                 f"<b>Новая цена: {final_price:.2f} RUB</b>\n\n"
+    #             ) + CHOOSE_PAYMENT_METHOD_MESSAGE
+    #
+    #     await state.update_data(final_price=float(final_price))
+    #
+    #     await message.edit_text(
+    #         message_text,
+    #         reply_markup=keyboards.create_payment_method_keyboard(
+    #             payment_methods=PAYMENT_METHODS,
+    #             action=data.get('action'),
+    #             key_id=data.get('key_id')
+    #         )
+    #     )
+    #     await state.set_state(PaymentProcess.waiting_for_payment_method)
         
-        if not plan:
-            await message.edit_text("❌ Ошибка: Тариф не найден.")
-            await state.clear()
-            return
-
-        price = Decimal(str(plan['price']))
-        final_price = price
-        discount_applied = False
-        message_text = CHOOSE_PAYMENT_METHOD_MESSAGE
-
-        if user_data.get('referred_by') and user_data.get('total_spent', 0) == 0:
-            discount_percentage_str = get_setting("referral_discount") or "0"
-            discount_percentage = Decimal(discount_percentage_str)
-            
-            if discount_percentage > 0:
-                discount_amount = (price * discount_percentage / 100).quantize(Decimal("0.01"))
-                final_price = price - discount_amount
-
-                message_text = (
-                    f"🎉 Как приглашенному пользователю, на вашу первую покупку предоставляется скидка {discount_percentage_str}%!\n"
-                    f"Старая цена: <s>{price:.2f} RUB</s>\n"
-                    f"<b>Новая цена: {final_price:.2f} RUB</b>\n\n"
-                ) + CHOOSE_PAYMENT_METHOD_MESSAGE
-
-        await state.update_data(final_price=float(final_price))
-
-        await message.edit_text(
-            message_text,
-            reply_markup=keyboards.create_payment_method_keyboard(
-                payment_methods=PAYMENT_METHODS,
-                action=data.get('action'),
-                key_id=data.get('key_id')
-            )
-        )
-        await state.set_state(PaymentProcess.waiting_for_payment_method)
-        
-    @user_router.callback_query(PaymentProcess.waiting_for_payment_method, F.data == "back_to_email_prompt")
-    async def back_to_email_prompt_handler(callback: types.CallbackQuery, state: FSMContext):
-        await callback.message.edit_text(
-            "📧 Пожалуйста, введите ваш email для отправки чека об оплате.\n\n"
-            "Если вы не хотите указывать почту, нажмите кнопку ниже.",
-            reply_markup=keyboards.create_skip_email_keyboard()
-        )
-        await state.set_state(PaymentProcess.waiting_for_email)
+    # @user_router.callback_query(PaymentProcess.waiting_for_payment_method, F.data == "back_to_email_prompt")
+    # async def back_to_email_prompt_handler(callback: types.CallbackQuery, state: FSMContext):
+    #     await callback.message.edit_text(
+    #         "📧 Пожалуйста, введите ваш email для отправки чека об оплате.\n\n"
+    #         "Если вы не хотите указывать почту, нажмите кнопку ниже.",
+    #         reply_markup=keyboards.create_skip_email_keyboard()
+    #     )
+    #     await state.set_state(PaymentProcess.waiting_for_email)
 
     @user_router.callback_query(
         PaymentProcess.waiting_for_payment_method,
-        F.data == "pay_lava"
+        F.data == "pay_lava_sbp"
     )
-    async def waiting_for_lava_currency(
-            callback: types.CallbackQuery,
-            state: FSMContext
-    ):
+    async def pay_sbp(callback: types.CallbackQuery, state: FSMContext):
+        await state.update_data(
+            method="sbp",
+            currency="rub"
+        )
+
+        await create_lava_payment(callback, state)
+
+    @user_router.callback_query(
+        PaymentProcess.waiting_for_payment_method,
+        F.data == "pay_lava_card"
+    )
+    async def pay_card(callback: types.CallbackQuery, state: FSMContext):
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
                 [
@@ -939,171 +951,102 @@ def get_user_router() -> Router:
         PaymentProcess.waiting_for_currency,
         F.data.startswith("lava_curr_")
     )
-    async def waiting_for_lava_method(
-            callback: types.CallbackQuery,
-            state: FSMContext
-    ):
+    async def select_currency(callback: types.CallbackQuery, state: FSMContext):
         currency = callback.data.removeprefix("lava_curr_")
-        await state.update_data(currency=currency)
 
-        prefix = "pay_lava_"
-        keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="💳 Карта",
-                        callback_data=f"{prefix}card"
-                    ),
-                    InlineKeyboardButton(
-                        text="📱 СБП",
-                        callback_data=f"{prefix}sbp"
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        text="⬅️ Назад",
-                        callback_data="back_currency"
-                    )
-                ]
-            ]
+        await state.update_data(
+            currency=currency,
+            method="card"
         )
 
-        await callback.message.edit_text(
-            "Выберите способ оплаты:",
-            reply_markup=keyboard
-        )
-        await state.set_state(PaymentProcess.waiting_for_payment_method)
+        await create_lava_payment(callback, state)
 
-    @user_router.callback_query(PaymentProcess.waiting_for_payment_method, F.data.startswith("pay_lava_"))
-    async def create_lava_payment_handler(callback: types.CallbackQuery, state: FSMContext):
-        await callback.answer("Создаю ссылку на оплату...")
+    async def create_lava_payment(callback: types.CallbackQuery, state: FSMContext):
+        await callback.answer("Создаю ссылку...")
 
-        LAVA_METHODS = {
-            "card": "Банковская карта",
-            "sbp": "СБП",
-        }
-        LAVA_CURRENCY = {
-            "rub": "Российский рубль",
-            "eur": "Евро",
-            "usd": "Доллар"
-        }
+        data = await state.get_data()
 
-        method = callback.data.removeprefix("pay_lava_")
-        if method not in LAVA_METHODS:
-            await callback.answer("Неизвестный способ оплаты.", show_alert=True)
+        method = data.get("method")
+        currency = data.get("currency")
+
+        if method not in {"card", "sbp"}:
+            await callback.answer("Неизвестный метод оплаты", show_alert=True)
             return
-
 
         if not LAVA_API_KEY or not LAVA_OFFER_ID:
             await callback.message.edit_text(
-                "❌ Оплата через Lava.top не настроена. Администратор должен указать API Key и Offer ID в панели."
+                "❌ Платежная система не настроена"
             )
             await state.clear()
             return
 
-        data = await state.get_data()
-        user_data = get_user(callback.from_user.id)
-
-        currency = data.get("currency")
-        if currency not in LAVA_CURRENCY:
-            await callback.answer("Неизвестная валюта для оплаты.", show_alert=True)
-            return
-
-        plan_id = data.get('plan_id')
-        plan = get_plan_by_id(plan_id)
-
+        plan = get_plan_by_id(data["plan_id"])
         if not plan:
-            await callback.message.answer("Произошла ошибка при выборе тарифа.")
+            await callback.message.edit_text("Ошибка тарифа")
             await state.clear()
             return
 
-        base_price = Decimal(str(plan['price']))
-        price_rub = base_price
-
-        # if user_data.get('referred_by') and user_data.get('total_spent', 0) == 0:
-        #     discount_percentage_str = get_setting("referral_discount") or "0"
-        #     discount_percentage = Decimal(discount_percentage_str)
-        #     if discount_percentage > 0:
-        #         discount_amount = (base_price * discount_percentage / 100).quantize(Decimal("0.01"))
-                # price_rub = base_price - discount_amount
-
-        customer_email = data.get('customer_email') or get_setting("receipt_email")
-        host_name = data.get('host_name')
-        action = data.get('action')
-        key_id = data.get('key_id')
-        months = plan['months']
-        user_id = callback.from_user.id
-
+        customer_email = data.get("customer_email") or get_setting("receipt_email")
         if not customer_email:
-            await callback.message.edit_text("❌ Укажите email для продолжения оплаты.")
+            await callback.message.edit_text("❌ Укажите email")
             await state.clear()
             return
 
-        try:
-            if method == "sbp":
-                payload = {
-                    "email": customer_email,
-                    "offerId": LAVA_OFFER_ID,
-                    "currency": currency.upper(),
-                    "paymentMethod": "SBP",
-                    "paymentProvider": "PAY2ME",
-                    "clientUtm": {
-                        "telegram_id": callback.from_user.id
-                    }
-                }
-            else:
-                payload = {
-                    "email": customer_email,
-                    "offerId": LAVA_OFFER_ID,
-                    "currency": currency.upper(),
-                    "clientUtm": {
-                        "telegram_id": callback.from_user.id
-                    }
-                }
-
-            headers = {
-                "X-Api-Key": LAVA_API_KEY,
-                "Accept": "application/json"
+        payload = {
+            "email": customer_email,
+            "offerId": LAVA_OFFER_ID,
+            "currency": currency.upper(),
+            "clientUtm": {
+                "telegram_id": callback.from_user.id
             }
-            logger.info("payload: %s", payload)
-            async with aiohttp.ClientSession() as session:
-                async with session.post("https://gate.lava.top/api/v3/invoice", json=payload, headers=headers) as response:
-                    response_text = await response.text()
-                    if response.status not in (200, 201):
-                        raise Exception(f"Lava.top returned {response.status}: {response_text}")
+        }
 
-                    invoice_data = await response.json(content_type=None)
+        if method == "sbp":
+            payload.update({
+                "paymentMethod": "SBP",
+                "paymentProvider": "PAY2ME"
+            })
 
-            payment_id = invoice_data.get("id")
-            payment_url = invoice_data.get("paymentUrl")
-            # payment_url = "https://app.lava.top/products/92d98e39-9f9b-4749-8106-3f68e223e799/ed16744d-a8c8-4467-8b9b-e7e1e745925d"
+        headers = {
+            "X-Api-Key": LAVA_API_KEY,
+            "Accept": "application/json"
+        }
 
-            if not payment_id or not payment_url:
-                raise Exception(f"Lava.top response does not contain payment url or contract id: {invoice_data}")
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                    "https://gate.lava.top/api/v3/invoice",
+                    json=payload,
+                    headers=headers
+            ) as response:
+                text = await response.text()
 
-            metadata = {
-                "user_id": user_id,
-                "months": months,
-                "price": float(price_rub),
-                "action": action,
-                "key_id": key_id,
-                "host_name": host_name,
-                "plan_id": plan_id,
-                "customer_email": customer_email,
-                "payment_method": "Lava.top"
-            }
-            create_pending_transaction(payment_id, user_id, float(price_rub), metadata)
+                if response.status not in (200, 201):
+                    raise Exception(text)
 
+                invoice = await response.json(content_type=None)
+
+        payment_url = invoice.get("paymentUrl")
+        payment_id = invoice.get("id")
+
+        if not payment_url:
+            await callback.message.edit_text("Ошибка создания платежа")
             await state.clear()
+            return
 
-            await callback.message.edit_text(
-                "Нажмите на кнопку ниже для оплаты:",
-                reply_markup=keyboards.create_payment_keyboard(payment_url)
-            )
-        except Exception as e:
-            logger.error(f"Failed to create Lava.top payment: {e}", exc_info=True)
-            await callback.message.answer("Не удалось создать ссылку на оплату.")
-            await state.clear()
+        create_pending_transaction(
+            payment_id,
+            callback.from_user.id,
+            float(plan["price"]),
+            data
+        )
+
+        await state.clear()
+
+        await callback.message.edit_text(
+            "Нажмите для оплаты:",
+            reply_markup=keyboards.create_payment_keyboard(payment_url)
+        )
+
 
     @user_router.callback_query(PaymentProcess.waiting_for_payment_method, F.data == "pay_cryptobot")
     async def create_cryptobot_invoice_handler(callback: types.CallbackQuery, state: FSMContext):
