@@ -998,7 +998,8 @@ def get_user_router() -> Router:
             "currency": currency.upper(),
             "clientUtm": {
                 "telegram_id": callback.from_user.id
-            }
+            },
+            "amount": plan['price']
         }
 
         if method == "sbp":
