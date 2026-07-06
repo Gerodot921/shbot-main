@@ -857,22 +857,6 @@ def get_user_router() -> Router:
         else:
             await message.answer("❌ Неверный формат email. Попробуйте еще раз.")
 
-    @user_router.callback_query(PaymentProcess.waiting_for_email, F.data == "skip_email")
-    async def skip_email_handler(callback: types.CallbackQuery, state: FSMContext):
-        await callback.answer()
-        await state.update_data(customer_email=None)
-
-        data = await state.get_data()
-        await callback.message.edit_text(
-            CHOOSE_PAYMENT_METHOD_MESSAGE,
-            reply_markup=keyboards.create_payment_method_keyboard(
-                payment_methods=PAYMENT_METHODS,
-                action=data.get('action'),
-                key_id=data.get('key_id')
-            )
-        )
-        await state.set_state(PaymentProcess.waiting_for_payment_method)
-        logger.info(f"User {callback.from_user.id}: State set to waiting_for_payment_method")
 
     async def show_payment_options(message: types.Message, state: FSMContext):
         data = await state.get_data()
@@ -948,21 +932,21 @@ def get_user_router() -> Router:
             return
 
         base_price = Decimal(str(plan['price']))
-        price_rub = base_price
+        # price_rub = base_price
 
         if user_data.get('referred_by') and user_data.get('total_spent', 0) == 0:
             discount_percentage_str = get_setting("referral_discount") or "0"
             discount_percentage = Decimal(discount_percentage_str)
             if discount_percentage > 0:
                 discount_amount = (base_price * discount_percentage / 100).quantize(Decimal("0.01"))
-                price_rub = base_price - discount_amount
+                # price_rub = base_price - discount_amount
 
         customer_email = data.get('customer_email') or get_setting("receipt_email")
-        host_name = data.get('host_name')
-        action = data.get('action')
-        key_id = data.get('key_id')
-        months = plan['months']
-        user_id = callback.from_user.id
+        # host_name = data.get('host_name')
+        # action = data.get('action')
+        # key_id = data.get('key_id')
+        # months = plan['months']
+        # user_id = callback.from_user.id
 
         if not customer_email:
             await callback.message.edit_text("❌ Укажите email для продолжения оплаты.")
