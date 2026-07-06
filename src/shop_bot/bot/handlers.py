@@ -68,7 +68,7 @@ class Onboarding(StatesGroup):
 class PaymentProcess(StatesGroup):
     waiting_for_email = State()
     waiting_for_payment_method = State()
-    waiting_for_lava_method = State()
+    waiting_for_currency = State()
 
 class Broadcast(StatesGroup):
     waiting_for_message = State()
@@ -826,7 +826,7 @@ def get_user_router() -> Router:
             )
         )
         await state.set_state(PaymentProcess.waiting_for_payment_method)
-        logger.info(f"User {callback.chat.id}: State set to waiting_for_payment_method")
+        logger.info(f"User {callback.message.chat.id}: State set to waiting_for_payment_method")
 
 
     @user_router.callback_query(PaymentProcess.waiting_for_email, F.data == "back_to_plans")
@@ -905,25 +905,59 @@ def get_user_router() -> Router:
         )
         await state.set_state(PaymentProcess.waiting_for_email)
 
-
     @user_router.callback_query(
         PaymentProcess.waiting_for_payment_method,
         F.data == "pay_lava"
     )
-    async def waiting_for_lava_method(
-            callback: types.CallbackQuery
+    async def waiting_for_lava_currency(
+            callback: types.CallbackQuery,
+            state: FSMContext
     ):
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="RUB", callback_data="lava_curr_rub"),
+                    InlineKeyboardButton(text="USD", callback_data="lava_curr_usd"),
+                    InlineKeyboardButton(text="EUR", callback_data="lava_curr_eur"),
+                ]
+            ]
+        )
+
+        await callback.message.edit_text(
+            "Выберите валюту оплаты:",
+            reply_markup=keyboard
+        )
+
+        await state.set_state(PaymentProcess.waiting_for_currency)
+
+    @user_router.callback_query(
+        PaymentProcess.waiting_for_currency,
+        F.data.startswith("lava_curr_")
+    )
+    async def waiting_for_lava_method(
+            callback: types.CallbackQuery,
+            state: FSMContext
+    ):
+        currency = callback.data.removeprefix("lava_curr_")
+        await state.update_data(currency=currency)
+
         prefix = "pay_lava_"
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
                 [
                     InlineKeyboardButton(
                         text="💳 Карта",
-                        callback_data=prefix + "card"
+                        callback_data=f"{prefix}card"
                     ),
                     InlineKeyboardButton(
                         text="📱 СБП",
-                        callback_data=prefix + "sbp"
+                        callback_data=f"{prefix}sbp"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="⬅️ Назад",
+                        callback_data="back_currency"
                     )
                 ]
             ]
@@ -933,6 +967,7 @@ def get_user_router() -> Router:
             "Выберите способ оплаты:",
             reply_markup=keyboard
         )
+        await state.set_state(PaymentProcess.waiting_for_payment_method)
 
     @user_router.callback_query(PaymentProcess.waiting_for_payment_method, F.data.startswith("pay_lava_"))
     async def create_lava_payment_handler(callback: types.CallbackQuery, state: FSMContext):
@@ -942,9 +977,13 @@ def get_user_router() -> Router:
             "card": "Банковская карта",
             "sbp": "СБП",
         }
+        LAVA_CURRENCY = {
+            "rub": "Российский рубль",
+            "eur": "Евро",
+            "usd": "Доллар"
+        }
 
         method = callback.data.removeprefix("pay_lava_")
-
         if method not in LAVA_METHODS:
             await callback.answer("Неизвестный способ оплаты.", show_alert=True)
             return
@@ -959,6 +998,11 @@ def get_user_router() -> Router:
 
         data = await state.get_data()
         user_data = get_user(callback.from_user.id)
+
+        currency = data.get("currency")
+        if currency not in LAVA_CURRENCY:
+            await callback.answer("Неизвестная валюта для оплаты.", show_alert=True)
+            return
 
         plan_id = data.get('plan_id')
         plan = get_plan_by_id(plan_id)
@@ -995,7 +1039,7 @@ def get_user_router() -> Router:
                 payload = {
                     "email": customer_email,
                     "offerId": LAVA_OFFER_ID,
-                    "currency": "RUB",
+                    "currency": currency.upper(),
                     "paymentMethod": "SBP",
                     "paymentProvider": "PAY2ME",
                     "clientUtm": {
@@ -1006,7 +1050,7 @@ def get_user_router() -> Router:
                 payload = {
                     "email": customer_email,
                     "offerId": LAVA_OFFER_ID,
-                    "currency": "RUB",
+                    "currency": currency.upper(),
                     "clientUtm": {
                         "telegram_id": callback.from_user.id
                     }
