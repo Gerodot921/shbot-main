@@ -2,10 +2,10 @@
 name = "vles-shopbot"
 version = "2.1.0"
 description = "Бот для автоматической продажи VLESS VPN"
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.11,<3.15"
 
 dependencies = [
-    "aiogram==3.21.0",
+    "aiogram==3.29.1",
     "flask==3.1.1",
     "py3xui==0.4.0",
     "pyotp==2.9.0",
