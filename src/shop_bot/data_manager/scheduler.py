@@ -1,15 +1,14 @@
 import asyncio
 import logging
-
 from datetime import datetime, timedelta
 
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram import Bot
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from shop_bot.bot_controller import BotController
 from shop_bot.data_manager import database
 from shop_bot.modules import xui_api
-from shop_bot.bot import keyboards
+from src.shop_bot.modules.xui_api import login_to_host
 
 CHECK_INTERVAL_SECONDS = 300
 NOTIFY_BEFORE_HOURS = {72, 48, 24, 1}
@@ -130,7 +129,7 @@ async def sync_keys_with_panels():
         
         try:
             logger.info(f"{host=}")
-            api, inbound = xui_api.login_to_host(
+            api, inbound = login_to_host(
                 host_url=host['host_url'],
                 username=host['host_username'],
                 password=host['host_pass'],

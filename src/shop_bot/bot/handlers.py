@@ -1,50 +1,44 @@
-import logging
-import uuid
-import qrcode
-import aiohttp
-import re
-import aiohttp
+import asyncio
+import base64
 import hashlib
 import json
-import base64
-import asyncio
-
-from urllib.parse import urlencode
-from hmac import compare_digest
+import logging
+import re
+import uuid
+from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 from functools import wraps
 from io import BytesIO
-from datetime import datetime, timedelta
-from aiosend import CryptoPay, TESTNET
-from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict
 
+import aiohttp
+import qrcode
+from aiogram import Bot, Router, F, types, html
+from aiogram.enums import ChatMemberStatus
+from aiogram.exceptions import TelegramBadRequest
+from aiogram.filters import Command, CommandObject, CommandStart, StateFilter
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import BufferedInputFile, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiosend import CryptoPay
 from pytonconnect import TonConnect
 from pytonconnect.exceptions import UserRejectsError
 
-from aiogram import Bot, Router, F, types, html
-from aiogram.filters import Command, CommandObject, CommandStart, StateFilter
-from aiogram.types import BufferedInputFile, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.exceptions import TelegramBadRequest
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.enums import ChatMemberStatus
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-
 from src.shop_bot.bot import keyboards
-from src.shop_bot.modules import xui_api
+from src.shop_bot.config import (
+    get_profile_text, get_vpn_active_text, VPN_INACTIVE_TEXT, VPN_NO_DATA_TEXT,
+    get_key_info_text, CHOOSE_PAYMENT_METHOD_MESSAGE, get_purchase_success_text
+)
 from src.shop_bot.data_manager.database import (
     get_user, add_new_key, get_user_keys, update_user_stats,
     register_user_if_not_exists, get_next_key_number, get_key_by_id,
     update_key_info, set_trial_used, set_terms_agreed, get_setting, get_all_hosts,
     get_plans_for_host, get_plan_by_id, log_transaction, get_referral_count,
     add_to_referral_balance, create_pending_transaction, get_all_users,
-    set_referral_balance, set_referral_balance_all, set_user_email
+    set_referral_balance, set_referral_balance_all
 )
-
-from src.shop_bot.config import (
-    get_profile_text, get_vpn_active_text, VPN_INACTIVE_TEXT, VPN_NO_DATA_TEXT,
-    get_key_info_text, CHOOSE_PAYMENT_METHOD_MESSAGE, get_purchase_success_text
-)
+from src.shop_bot.modules import xui_api
 from src.shop_bot.modules.xui_api import create_or_update_key_on_host
 
 TELEGRAM_BOT_USERNAME = None
@@ -93,7 +87,15 @@ async def show_main_menu(message: types.Message, edit_message: bool = False):
     trial_available = not (user_db_data and user_db_data.get('trial_used'))
     is_admin = str(user_id) == ADMIN_ID
 
-    text = "🏠 <b>Главное меню</b>\n\nВыберите действие:"
+    text = """👋 Добро пожаловать в 2+2 VPN!
+
+Самый дешевый VPN на рынке, быстрый и надежный! ✨
+
+⚡️ Скорость до 1GB/с
+
+🚀 Канал — 
+🌐 Сайт — 
+🧑‍💻 Поддержка —"""
     keyboard = keyboards.create_main_menu_keyboard(user_keys, trial_available, is_admin)
     
     if edit_message:
@@ -618,6 +620,7 @@ def get_user_router() -> Router:
                 email=f"user{user_id}-key{get_next_key_number(user_id)}-trial@telegram.bot",
                 days_to_add=int(get_setting("trial_duration_days"))
             )
+
             if not result:
                 await message.edit_text("❌ Не удалось создать пробный ключ. Ошибка на сервере.")
                 return
