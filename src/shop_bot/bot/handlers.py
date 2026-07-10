@@ -95,7 +95,6 @@ async def show_main_menu(message: types.Message, edit_message: bool = False):
 ⚡️ Скорость до 1GB/с
 
 🚀 Канал — 
-🌐 Сайт — 
 🧑‍💻 Поддержка —"""
     keyboard = keyboards.create_main_menu_keyboard(user_keys, trial_available, is_admin)
     
@@ -744,19 +743,19 @@ def get_user_router() -> Router:
             disable_web_page_preview=False
         )
 
-    @user_router.callback_query(F.data == "buy_new_key")
-    @registration_required
-    async def buy_new_key_handler(callback: types.CallbackQuery):
-        await callback.answer()
-        hosts = get_all_hosts()
-        if not hosts:
-            await callback.message.edit_text("❌ В данный момент нет доступных серверов для покупки.")
-            return
-        
-        await callback.message.edit_text(
-            "Выберите сервер, на котором хотите приобрести ключ:",
-            reply_markup=keyboards.create_host_selection_keyboard(hosts, action="new")
-        )
+    # @user_router.callback_query(F.data == "buy_new_key")
+    # @registration_required
+    # async def buy_new_key_handler(callback: types.CallbackQuery):
+    #     await callback.answer()
+    #     hosts = get_all_hosts()
+    #     if not hosts:
+    #         await callback.message.edit_text("❌ В данный момент нет доступных серверов для покупки.")
+    #         return
+    #
+    #     await callback.message.edit_text(
+    #         "Выберите сервер, на котором хотите приобрести ключ:",
+    #         reply_markup=keyboards.create_host_selection_keyboard(hosts, action="new")
+    #     )
 
     @user_router.callback_query(F.data == "manage_keys")
     @registration_required

@@ -91,8 +91,7 @@ def create_plans_keyboard(plans: list[dict], action: str, host_name: str, key_id
     for plan in plans:
         callback_data = f"buy_{host_name}_{plan['plan_id']}_{action}_{key_id}"
         builder.button(text=f"{plan['plan_name']}", callback_data=callback_data)
-    back_callback = "manage_keys" if action == "extend" else "buy_new_key"
-    builder.button(text="⬅️ Назад", callback_data=back_callback)
+    builder.button(text="⬅️ Назад", callback_data="manage_keys")
     builder.adjust(1) 
     return builder.as_markup()
 
@@ -118,7 +117,7 @@ def create_payment_method_keyboard(plan: dict, payment_methods: dict, action: st
     if payment_methods.get("tonconnect"):
         builder.button(text="🪙 TON Connect", callback_data="pay_tonconnect")
 
-    builder.button(text="⬅️ Назад", callback_data="back_to_email_prompt")
+    builder.button(text="⬅️ Назад", callback_data="manage_keys")
 
     builder.adjust(1)
     return builder.as_markup()
