@@ -592,16 +592,13 @@ def get_user_router() -> Router:
         if not hosts:
             await callback.message.edit_text("❌ В данный момент нет доступных серверов для создания пробного ключа.")
             return
-            
-        if len(hosts) == 1:
-            await callback.answer()
-            await process_trial_key_creation(callback.message, hosts[0]['host_name'])
-        else:
-            await callback.answer()
-            await callback.message.edit_text(
-                "Выберите сервер, на котором хотите получить пробный ключ:",
-                reply_markup=keyboards.create_host_selection_keyboard(hosts, action="trial")
-            )
+
+        random_host = random.choice(hosts)
+        host_name = random_host["host_name"]
+
+        await callback.answer()
+        await process_trial_key_creation(callback.message, host_name)
+
 
     @user_router.callback_query(F.data.startswith("select_host_trial_"))
     @registration_required
@@ -609,6 +606,7 @@ def get_user_router() -> Router:
         await callback.answer()
         host_name = callback.data[len("select_host_trial_"):]
         await process_trial_key_creation(callback.message, host_name)
+
 
     async def process_trial_key_creation(message: types.Message, host_name: str):
         user_id = message.chat.id
