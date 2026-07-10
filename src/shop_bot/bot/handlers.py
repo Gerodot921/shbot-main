@@ -3,6 +3,7 @@ import base64
 import hashlib
 import json
 import logging
+import random
 import re
 import uuid
 from datetime import datetime
@@ -564,16 +565,19 @@ def get_user_router() -> Router:
                 reply_markup=keyboards.create_support_keyboard(support_user)
             )
 
-    @user_router.callback_query(F.data == "manage_keys")
-    @registration_required
-    async def manage_keys_handler(callback: types.CallbackQuery):
-        await callback.answer()
-        user_id = callback.from_user.id
-        user_keys = get_user_keys(user_id)
-        await callback.message.edit_text(
-            "Ваши ключи:" if user_keys else "У вас пока нет ключей.",
-            reply_markup=keyboards.create_keys_management_keyboard(user_keys)
-        )
+    # @user_router.callback_query(F.data == "manage_keys")
+    # @registration_required
+    # async def manage_keys_handler(callback: types.CallbackQuery):
+    #     await callback.answer()
+    #     user_id = callback.from_user.id
+    #     user_keys = get_user_keys(user_id)
+    #     hosts = get_all_hosts()
+    #     random_host = random.choice(hosts)
+    #     callback_data = f"select_host_new_{random_host['host_name']}"
+    #     await callback.message.edit_text(
+    #         "Ваши ключи:" if user_keys else "У вас пока нет ключей.",
+    #         reply_markup=keyboards.create_keys_management_keyboard(user_keys)
+    #     )
 
     @user_router.callback_query(F.data == "get_trial")
     @registration_required
@@ -756,11 +760,13 @@ def get_user_router() -> Router:
             reply_markup=keyboards.create_host_selection_keyboard(hosts, action="new")
         )
 
-    @user_router.callback_query(F.data.startswith("select_host_new_"))
+    @user_router.callback_query(F.data == "manage_keys")
     @registration_required
     async def select_host_for_purchase_handler(callback: types.CallbackQuery):
         await callback.answer()
-        host_name = callback.data[len("select_host_new_"):]
+        hosts = get_all_hosts()
+        random_host = random.choice(hosts)
+        host_name = random_host["host_name"]
         plans = get_plans_for_host(host_name)
         if not plans:
             await callback.message.edit_text(f"❌ Для сервера \"{host_name}\" не настроены тарифы.")
