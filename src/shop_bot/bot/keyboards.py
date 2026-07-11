@@ -91,7 +91,7 @@ def create_plans_keyboard(plans: list[dict], action: str, host_name: str, key_id
     for plan in plans:
         callback_data = f"buy_{host_name}_{plan['plan_id']}_{action}_{key_id}"
         builder.button(text=f"{plan['plan_name']}", callback_data=callback_data)
-    builder.button(text="⬅️ Назад", callback_data="manage_keys")
+    builder.button(text="⬅️ Назад", callback_data="back_to_main_menu")
     builder.adjust(1) 
     return builder.as_markup()
 
