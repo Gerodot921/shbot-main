@@ -657,7 +657,7 @@ def get_user_router() -> Router:
         await callback.message.edit_text("Загружаю информацию о ключе...")
         user_id = callback.from_user.id
         key_data = get_key_by_id(key_id_to_show)
-
+        logger.info(f"{key_data=}")
         if not key_data or key_data['user_id'] != user_id:
             await callback.message.edit_text("❌ Ошибка: ключ не найден.")
             return
