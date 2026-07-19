@@ -55,7 +55,7 @@ def get_connection_string(inbound: Inbound, user_uuid: str, host_url: str, remar
     )
     return connection_string
 
-def update_or_create_client_on_panel(api: Api, inbound_id: int, email: str, days_to_add: int) -> tuple[str | None, int | None]:
+def update_or_create_client_on_panel(api: Api, inbound_id: int, email: str, days_to_add: int, tg_id: int = 0) -> tuple[str | None, int | None]:
     try:
         inbound_to_modify = api.inbound.get_by_id(inbound_id)
         if not inbound_to_modify:
@@ -95,7 +95,7 @@ def update_or_create_client_on_panel(api: Api, inbound_id: int, email: str, days
                 enable=True,
                 flow="xtls-rprx-vision",
                 expiry_time=new_expiry_ms,
-                tg_id=0
+                tg_id=tg_id
             )
             inbound_to_modify.settings.clients.append(new_client)
 
@@ -107,7 +107,7 @@ def update_or_create_client_on_panel(api: Api, inbound_id: int, email: str, days
         logger.error(f"Error in update_or_create_client_on_panel: {e}", exc_info=True)
         return None, None
 
-async def create_or_update_key_on_host(host_name: str, email: str, days_to_add: int) -> Dict | None:
+async def create_or_update_key_on_host(host_name: str, email: str, days_to_add: int, tg_id: int = 0) -> Dict | None:
     logger.info("create_or_update_key_on_host")
     host_data = get_host(host_name)
     if not host_data:
@@ -123,7 +123,7 @@ async def create_or_update_key_on_host(host_name: str, email: str, days_to_add: 
         logger.error(f"Workflow failed: Could not log in or find inbound on host '{host_name}'.")
         return None
         
-    client_uuid, new_expiry_ms = update_or_create_client_on_panel(api, inbound.id, email, days_to_add)
+    client_uuid, new_expiry_ms = update_or_create_client_on_panel(api, inbound.id, email, days_to_add, tg_id=tg_id)
     if not client_uuid:
         logger.error(f"Workflow failed: Could not create/update client '{email}' on host '{host_name}'.")
         return None

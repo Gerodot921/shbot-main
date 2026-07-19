@@ -614,14 +614,15 @@ def get_user_router() -> Router:
         try:
             trial_days = int(get_setting("trial_duration_days"))
             next_key_number = get_next_key_number(user_id)
-            
+
             logger.info(
                 f"{host_name=}, user{user_id}-key{next_key_number}-trial@telegram.bot, {trial_days}"
             )
             result = await create_or_update_key_on_host(
                 host_name=host_name,
                 email=f"user{user_id}-key{next_key_number}-trial@telegram.bot",
-                days_to_add=int(get_setting("trial_duration_days"))
+                days_to_add=int(get_setting("trial_duration_days")),
+                tg_id=user_id
             )
 
             if not result:
@@ -1554,7 +1555,8 @@ async def process_successful_payment(bot: Bot, metadata: dict):
         result = await xui_api.create_or_update_key_on_host(
             host_name=host_name,
             email=email,
-            days_to_add=days_to_add
+            days_to_add=days_to_add,
+            tg_id=user_id
         )
 
         if not result:
