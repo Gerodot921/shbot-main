@@ -35,6 +35,28 @@ def login_to_host(host_url: str, token: str, inbound_id: int) -> tuple[Api | Non
 def get_connection_string(inbound: Inbound, user_uuid: str, host_url: str, remark: str) -> str | None:
     logger.info(f"GET_CONNECTION_STRING: {inbound.stream_settings=} {user_uuid=} {remark=}")
     if not inbound: return None
+
+    security = inbound.stream_settings.security
+
+    if security == "tls":
+        tls_settings = inbound.stream_settings.tls_settings
+
+        fingerprint = (
+            tls_settings
+            .get("settings", {})
+            .get("fingerprint", "chrome")
+        )
+
+        parsed_url = urlparse(host_url)
+
+        return (
+            f"vless://{user_uuid}@{parsed_url.hostname}:{inbound.port}"
+            f"?type=tcp"
+            f"&security=tls"
+            f"&fp={fingerprint}"
+            f"#{remark}"
+        )
+
     settings = inbound.stream_settings.reality_settings.get("settings")
     logger.info(f"{settings=}")
     if not settings: return None
