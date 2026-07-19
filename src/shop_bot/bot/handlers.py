@@ -613,12 +613,14 @@ def get_user_router() -> Router:
 
         try:
             trial_days = int(get_setting("trial_duration_days"))
+            next_key_number = get_next_key_number(user_id)
+            
             logger.info(
-                f"{host_name=}, user{user_id}-key{get_next_key_number(user_id)}-trial@telegram.bot, {trial_days}"
+                f"{host_name=}, user{user_id}-key{next_key_number}-trial@telegram.bot, {trial_days}"
             )
             result = await create_or_update_key_on_host(
                 host_name=host_name,
-                email=f"user{user_id}-key{get_next_key_number(user_id)}-trial@telegram.bot",
+                email=f"user{user_id}-key{next_key_number}-trial@telegram.bot",
                 days_to_add=int(get_setting("trial_duration_days"))
             )
 
