@@ -214,7 +214,7 @@ def create_new_transactions_table(cursor: sqlite3.Cursor):
         )
     ''')
 
-def create_host(name: str, url: str, user: str, passwd: str, inbound: int):
+def create_host(name: str, url: str, token: str, passwd: str, inbound: int):
     try:
         with sqlite3.connect(DB_FILE) as conn:
             cursor = conn.cursor()
@@ -224,7 +224,7 @@ def create_host(name: str, url: str, user: str, passwd: str, inbound: int):
                     (host_name, host_url, host_token, host_inbound_id)
                 VALUES (?, ?, ?, ?)
                 """,
-                (name, url, user, inbound) # user = token
+                (name, url, token, inbound) # user = token
             )
             conn.commit()
             logging.info(f"Successfully created a new host: {name}")

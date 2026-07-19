@@ -243,7 +243,7 @@ def create_webhook_app(bot_controller_instance):
         create_host(
             name=request.form['host_name'],
             url=request.form['host_url'],
-            user=request.form['host_username'],
+            token=request.form['host_username'],
             passwd=request.form['host_pass'],
             inbound=int(request.form['host_inbound_id'])
         )
