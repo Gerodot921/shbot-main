@@ -69,10 +69,9 @@ def initialize_db():
             ''')
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS xui_hosts(
-                    host_name TEXT NOT NULL,
+                    host_name TEXT PRIMARY KEY,
                     host_url TEXT NOT NULL,
-                    host_username TEXT NOT NULL,
-                    host_pass TEXT NOT NULL,
+                    host_token TEXT NOT NULL,
                     host_inbound_id INTEGER NOT NULL
                 )
             ''')
@@ -220,8 +219,12 @@ def create_host(name: str, url: str, user: str, passwd: str, inbound: int):
         with sqlite3.connect(DB_FILE) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO xui_hosts (host_name, host_url, host_username, host_pass, host_inbound_id) VALUES (?, ?, ?, ?, ?)",
-                (name, url, user, passwd, inbound)
+                """
+                INSERT INTO xui_hosts
+                    (host_name, host_url, host_token, host_inbound_id)
+                VALUES (?, ?, ?, ?)
+                """,
+                (name, url, user, inbound) # user = token
             )
             conn.commit()
             logging.info(f"Successfully created a new host: {name}")
