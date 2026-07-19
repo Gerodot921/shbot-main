@@ -132,8 +132,7 @@ async def sync_keys_with_panels():
             logger.info(f"{host=}")
             api, inbound = login_to_host(
                 host_url=host['host_url'],
-                username=host['host_username'],
-                password=host['host_pass'],
+                token=host["host_token"],
                 inbound_id=host['host_inbound_id']
             )
 

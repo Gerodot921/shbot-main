@@ -10,22 +10,17 @@ from src.shop_bot.data_manager.database import get_host, get_key_by_email
 
 logger = logging.getLogger(__name__)
 
-def login_to_host(host_url: str, username: str, password: str, inbound_id: int, token: Optional[str] = None) -> tuple[Api | None, Inbound | None]:
+def login_to_host(host_url: str, token: str, inbound_id: int) -> tuple[Api | None, Inbound | None]:
     try:
         logger.info(
             "XUI host=%s username=%s password=%s inbound_id=%s",
             host_url,
-            username,
-            password,
             inbound_id,
             token
         )
-        if token:
-            api = Api(host_url, token=token)
-        else:
-            api = Api(host=host_url, username=username, password=password)
-            api.login()
-            
+
+        api = Api(host_url, token=token)
+
         inbounds: List[Inbound] = api.inbound.get_list()
         target_inbound = next((inbound for inbound in inbounds if inbound.id == inbound_id), None)
         
@@ -120,8 +115,7 @@ async def create_or_update_key_on_host(host_name: str, email: str, days_to_add: 
     logger.info(f"{host_data=}")
     api, inbound = login_to_host(
         host_url=host_data['host_url'],
-        username=host_data['host_username'],
-        password=host_data['host_pass'],
+        token=host_data["host_token"],
         inbound_id=host_data['host_inbound_id']
     )
     if not api or not inbound:
@@ -159,8 +153,7 @@ async def get_key_details_from_host(key_data: dict) -> dict | None:
 
     api, inbound = login_to_host(
         host_url=host_db_data['host_url'],
-        username=host_db_data['host_username'],
-        password=host_db_data['host_pass'],
+        token=host_db_data["host_token"],
         inbound_id=host_db_data['host_inbound_id']
     )
     if not api or not inbound: return None
@@ -177,8 +170,7 @@ async def delete_client_on_host(host_name: str, client_email: str) -> bool:
 
     api, inbound = login_to_host(
         host_url=host_data['host_url'],
-        username=host_data['host_username'],
-        password=host_data['host_pass'],
+        token=host_data["host_token"],
         inbound_id=host_data['host_inbound_id']
     )
 
