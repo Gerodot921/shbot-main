@@ -262,7 +262,9 @@ def get_user_router() -> Router:
         elif user_keys: vpn_status_text = VPN_INACTIVE_TEXT
         else: vpn_status_text = VPN_NO_DATA_TEXT
         final_text = get_profile_text(username, total_spent, total_months, vpn_status_text)
-        await callback.message.edit_text(final_text, reply_markup=keyboards.create_host_selection_keyboard())
+        await callback.message.edit_text(final_text, reply_markup=keyboards.create_keys_management_keyboard(
+            keys=active_keys
+        ))
 
     @user_router.callback_query(F.data == "start_broadcast")
     @registration_required
