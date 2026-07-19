@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def login_to_host(host_url: str, token: str, inbound_id: int) -> tuple[Api | None, Inbound | None]:
     try:
         logger.info(
-            "XUI host=%s username=%s password=%s inbound_id=%s",
+            "XUI host=%s inbound_id=%s token=%s",
             host_url,
             inbound_id,
             token
