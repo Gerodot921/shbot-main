@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timedelta
 import logging
 from urllib.parse import urlparse
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from py3xui import Api, Client, Inbound
 
@@ -10,17 +10,22 @@ from src.shop_bot.data_manager.database import get_host, get_key_by_email
 
 logger = logging.getLogger(__name__)
 
-def login_to_host(host_url: str, username: str, password: str, inbound_id: int) -> tuple[Api | None, Inbound | None]:
+def login_to_host(host_url: str, username: str, password: str, inbound_id: int, token: Optional[str] = None) -> tuple[Api | None, Inbound | None]:
     try:
         logger.info(
             "XUI host=%s username=%s password=%s inbound_id=%s",
             host_url,
             username,
             password,
-            inbound_id
+            inbound_id,
+            token
         )
-        api = Api(host=host_url, username=username, password=password)
-        api.login()
+        if token:
+            api = Api(host_url, token=token)
+        else:
+            api = Api(host=host_url, username=username, password=password)
+            api.login()
+            
         inbounds: List[Inbound] = api.inbound.get_list()
         target_inbound = next((inbound for inbound in inbounds if inbound.id == inbound_id), None)
         

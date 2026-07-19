@@ -124,6 +124,7 @@ async def sync_keys_with_panels():
         return
 
     for host in all_hosts:
+        logger.info(f"{host=}")
         host_name = host['host_name']
         logger.info(f"Scheduler: Processing host: '{host_name}'")
         
