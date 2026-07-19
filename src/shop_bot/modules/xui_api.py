@@ -33,10 +33,12 @@ def login_to_host(host_url: str, token: str, inbound_id: int) -> tuple[Api | Non
         return None, None
 
 def get_connection_string(inbound: Inbound, user_uuid: str, host_url: str, remark: str) -> str | None:
+    logger.info(f"GET_CONNECTION_STRING: {inbound.stream_settings=} {user_uuid=} {remark=}")
     if not inbound: return None
     settings = inbound.stream_settings.reality_settings.get("settings")
+    logger.info(f"settings")
     if not settings: return None
-    
+
     public_key = settings.get("publicKey")
     fp = settings.get("fingerprint")
     server_names = inbound.stream_settings.reality_settings.get("serverNames")
@@ -129,6 +131,7 @@ async def create_or_update_key_on_host(host_name: str, email: str, days_to_add: 
         return None
     
     connection_string = get_connection_string(inbound, client_uuid, host_data['host_url'], remark=host_name)
+    logger.info(f"{connection_string=}")
     
     logger.info(f"Successfully processed key for '{email}' on host '{host_name}'.")
     
