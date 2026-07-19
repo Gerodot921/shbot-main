@@ -36,7 +36,7 @@ def get_connection_string(inbound: Inbound, user_uuid: str, host_url: str, remar
     logger.info(f"GET_CONNECTION_STRING: {inbound.stream_settings=} {user_uuid=} {remark=}")
     if not inbound: return None
     settings = inbound.stream_settings.reality_settings.get("settings")
-    logger.info(f"settings")
+    logger.info(f"{settings=}")
     if not settings: return None
 
     public_key = settings.get("publicKey")
