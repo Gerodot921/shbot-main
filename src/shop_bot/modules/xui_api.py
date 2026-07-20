@@ -32,19 +32,19 @@ def login_to_host(host_url: str, token: str, inbound_id: int) -> tuple[Api | Non
         logger.error(f"Login or inbound retrieval failed for host '{host_url}': {e}", exc_info=True)
         return None, None
 
-def get_connection_string(api: Api, user_uuid: str, host_url: str, remark: str, email: str) -> str | None:
-    logger.info(f"GET_CONNECTION_STRING: {api.inbound.stream_settings=} {user_uuid=} {remark=}")
-    if not api.inbound: return None
+def get_connection_string(api: Api, inbound: Inbound, user_uuid: str, host_url: str, remark: str, email: str) -> str | None:
+    logger.info(f"GET_CONNECTION_STRING: {inbound=} {user_uuid=} {remark=}")
+    if not inbound: return None
 
-    settings = api.inbound.stream_settings.reality_settings.get("settings")
+    settings = inbound.stream_settings.reality_settings.get("settings")
     logger.info(f"{settings=}")
     if not settings: return None
 
     public_key = settings.get("publicKey")
     fp = settings.get("fingerprint")
-    server_names = api.inbound.stream_settings.reality_settings.get("serverNames")
-    short_ids = api.inbound.stream_settings.reality_settings.get("shortIds")
-    port = api.inbound.port
+    server_names = inbound.stream_settings.reality_settings.get("serverNames")
+    short_ids = inbound.stream_settings.reality_settings.get("shortIds")
+    port = inbound.port
     
     if not all([public_key, server_names, short_ids]): return None
     
@@ -134,7 +134,7 @@ async def create_or_update_key_on_host(host_name: str, email: str, days_to_add: 
         logger.error(f"Workflow failed: Could not create/update client '{email}' on host '{host_name}'.")
         return None
     
-    connection_string = get_connection_string(api, client_uuid, host_data['host_url'], remark=host_name, email=email)
+    connection_string = get_connection_string(api, inbound, client_uuid, host_data['host_url'], remark=host_name, email=email)
     logger.info(f"{connection_string=}")
     
     logger.info(f"Successfully processed key for '{email}' on host '{host_name}'.")
@@ -167,7 +167,7 @@ async def get_key_details_from_host(key_data: dict) -> dict | None:
     if not api or not inbound: return None
 
     email = key_data['key_email']
-    connection_string = get_connection_string(api, key_data['xui_client_uuid'], host_db_data['host_url'], remark=host_name, email=email)
+    connection_string = get_connection_string(api, inbound, key_data['xui_client_uuid'], host_db_data['host_url'], remark=host_name, email=email)
     return {"connection_string": connection_string}
 
 async def delete_client_on_host(host_name: str, client_email: str) -> bool:
