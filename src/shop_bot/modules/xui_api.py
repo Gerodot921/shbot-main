@@ -1,8 +1,8 @@
+import logging
 import uuid
 from datetime import datetime, timedelta
-import logging
+from typing import List, Dict
 from urllib.parse import urlparse
-from typing import List, Dict, Optional
 
 from py3xui import Api, Client, Inbound
 
@@ -32,46 +32,27 @@ def login_to_host(host_url: str, token: str, inbound_id: int) -> tuple[Api | Non
         logger.error(f"Login or inbound retrieval failed for host '{host_url}': {e}", exc_info=True)
         return None, None
 
-def get_connection_string(inbound: Inbound, user_uuid: str, host_url: str, remark: str) -> str | None:
-    logger.info(f"GET_CONNECTION_STRING: {inbound.stream_settings=} {user_uuid=} {remark=}")
-    if not inbound: return None
+def get_connection_string(api: Api, user_uuid: str, host_url: str, remark: str, email: str) -> str | None:
+    logger.info(f"GET_CONNECTION_STRING: {api.inbound.stream_settings=} {user_uuid=} {remark=}")
+    if not api.inbound: return None
 
-    security = inbound.stream_settings.security
-
-    if security == "tls":
-        tls_settings = inbound.stream_settings.tls_settings
-
-        fingerprint = (
-            tls_settings
-            .get("settings", {})
-            .get("fingerprint", "chrome")
-        )
-
-        parsed_url = urlparse(host_url)
-
-        return (
-            f"vless://{user_uuid}@{parsed_url.hostname}:{inbound.port}"
-            f"?type=tcp"
-            f"&security=tls"
-            f"&fp={fingerprint}"
-            f"#{remark}"
-        )
-
-    settings = inbound.stream_settings.reality_settings.get("settings")
+    settings = api.inbound.stream_settings.reality_settings.get("settings")
     logger.info(f"{settings=}")
     if not settings: return None
 
     public_key = settings.get("publicKey")
     fp = settings.get("fingerprint")
-    server_names = inbound.stream_settings.reality_settings.get("serverNames")
-    short_ids = inbound.stream_settings.reality_settings.get("shortIds")
-    port = inbound.port
+    server_names = api.inbound.stream_settings.reality_settings.get("serverNames")
+    short_ids = api.inbound.stream_settings.reality_settings.get("shortIds")
+    port = api.inbound.port
     
     if not all([public_key, server_names, short_ids]): return None
     
     parsed_url = urlparse(host_url)
     short_id = short_ids[0]
-    
+
+    client: Client = api.client.get_by_email(email=email)
+    connection_string = client.sub_id
     connection_string = (
         f"vless://{user_uuid}@{parsed_url.hostname}:{port}"
         f"?type=tcp&security=reality&pbk={public_key}&fp={fp}&sni={server_names[0]}"
@@ -112,6 +93,7 @@ def update_or_create_client_on_panel(api: Api, inbound_id: int, email: str, days
             
             client_uuid = inbound_to_modify.settings.clients[client_index].id
         else:
+
             client_uuid = str(uuid.uuid4())
             new_client = Client(
                 id=client_uuid,
@@ -119,7 +101,7 @@ def update_or_create_client_on_panel(api: Api, inbound_id: int, email: str, days
                 enable=True,
                 flow="xtls-rprx-vision",
                 expiry_time=new_expiry_ms,
-                tg_id=tg_id
+                tg_id=tg_id,
             )
             inbound_to_modify.settings.clients.append(new_client)
 
@@ -152,7 +134,7 @@ async def create_or_update_key_on_host(host_name: str, email: str, days_to_add: 
         logger.error(f"Workflow failed: Could not create/update client '{email}' on host '{host_name}'.")
         return None
     
-    connection_string = get_connection_string(inbound, client_uuid, host_data['host_url'], remark=host_name)
+    connection_string = get_connection_string(api, client_uuid, host_data['host_url'], remark=host_name, email=email)
     logger.info(f"{connection_string=}")
     
     logger.info(f"Successfully processed key for '{email}' on host '{host_name}'.")
@@ -184,7 +166,8 @@ async def get_key_details_from_host(key_data: dict) -> dict | None:
     )
     if not api or not inbound: return None
 
-    connection_string = get_connection_string(inbound, key_data['xui_client_uuid'], host_db_data['host_url'], remark=host_name)
+    email = key_data['key_email']
+    connection_string = get_connection_string(api, key_data['xui_client_uuid'], host_db_data['host_url'], remark=host_name, email=email)
     return {"connection_string": connection_string}
 
 async def delete_client_on_host(host_name: str, client_email: str) -> bool:
